@@ -1,16 +1,14 @@
 import os
 import sys
+import threading
+import customtkinter as ctk
+from tkinter import filedialog, messagebox
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 if sys.stdout is None:
     sys.stdout = open(os.devnull, 'w', encoding='utf-8')
 if sys.stderr is None:
     sys.stderr = open(os.devnull, 'w', encoding='utf-8')
-
-import threading
-import customtkinter as ctk
-from tkinter import filedialog, messagebox
-from concurrent.futures import ThreadPoolExecutor
-
 
 from ai_services import GeminiAIManager
 from report_writer import ReportWriter
@@ -19,7 +17,6 @@ from extractors import (
     DocxExtractor, ExcelExtractor, AudioExtractor, ImageExtractor
 )
 
-# Globális téma beállítások
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
@@ -40,7 +37,6 @@ class UltimateDocSummarizerApp(ctk.CTk):
         self.ai_manager = GeminiAIManager(model_name="gemini-2.5-flash")
         self.registry = ExtractorRegistry()
         self.setup_extractors()
-
         self.create_widgets()
         
         threading.Thread(target=self.initialize_system, daemon=True).start()
@@ -59,148 +55,101 @@ class UltimateDocSummarizerApp(ctk.CTk):
 
     def create_widgets(self):
         self.configure(fg_color=["#F4F6F9", "#0B0F19"])
-
         self.main_container = ctk.CTkFrame(self, fg_color="transparent")
         self.main_container.pack(fill="both", expand=True, padx=30, pady=25)
 
-        # 1. FEJLÉC PANEL
         self.header_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         self.header_frame.pack(fill="x", pady=(0, 20))
         
         self.title_label = ctk.CTkLabel(
-            self.header_frame, 
-            text="📁 FolderAnalyzer Pro", 
+            self.header_frame, text="📁 FolderAnalyzer Pro", 
             font=ctk.CTkFont(family="Segoe UI", size=26, weight="bold"),
             text_color=["#1E293B", "#6366F1"]
         )
         self.title_label.pack(side="left")
         
         self.subtitle_label = ctk.CTkLabel(
-            self.header_frame, 
-            text="Business Analyst & Software Architect AI Assistant", 
+            self.header_frame, text="Business Analyst & Software Architect AI Assistant", 
             font=ctk.CTkFont(family="Segoe UI", size=13, slant="italic"),
             text_color=["#64748B", "#94A3B8"]
         )
         self.subtitle_label.pack(side="right", pady=(10, 0))
 
-        # 2. MAPPA VÁLASZTÓ KÁRTYA (Card)
         self.folder_card = ctk.CTkFrame(
-            self.main_container, 
-            corner_radius=16, 
-            border_width=1, 
-            border_color=["#E2E8F0", "#1E293B"],
-            fg_color=["#FFFFFF", "#111827"]
+            self.main_container, corner_radius=16, border_width=1, 
+            border_color=["#E2E8F0", "#1E293B"], fg_color=["#FFFFFF", "#111827"]
         )
         self.folder_card.pack(fill="x", pady=(0, 20))
         
         self.btn_select_folder = ctk.CTkButton(
-            self.folder_card, 
-            text="🔍 Mappa Beolvasása", 
-            font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
-            height=42,
-            corner_radius=10,
-            fg_color=["#4F46E5", "#4338CA"],
-            hover_color=["#6366F1", "#4F46E5"],
-            command=self.select_folder
+            self.folder_card, text="🔍 Mappa Beolvasása", 
+            font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"), height=42, corner_radius=10,
+            fg_color=["#4F46E5", "#4338CA"], hover_color=["#6366F1", "#4F46E5"], command=self.select_folder
         )
         self.btn_select_folder.pack(side="left", padx=15, pady=15)
 
         self.lbl_folder_path = ctk.CTkLabel(
-            self.folder_card, 
-            text="Válassz ki egy forrásmappát az elemzés indításához...", 
-            font=ctk.CTkFont(family="Consolas", size=12),
-            anchor="w",
-            text_color=["#64748B", "#6B7280"]
+            self.folder_card, text="Válassz ki egy forrásmappát az elemzés indításához...", 
+            font=ctk.CTkFont(family="Consolas", size=12), anchor="w", text_color=["#64748B", "#6B7280"]
         )
         self.lbl_folder_path.pack(side="left", fill="x", expand=True, padx=(10, 15))
 
-        # 3. MŰVELETI PANEL (Gombok és Státusz)
         self.action_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         self.action_frame.pack(fill="x", pady=(0, 20))
 
         self.btn_start = ctk.CTkButton(
-            self.action_frame, 
-            text="🚀 Elemzés Indítása", 
-            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
-            height=44,
-            width=190,
-            corner_radius=10,
-            state="disabled", 
-            fg_color=["#10B981", "#059669"], 
-            hover_color=["#34D399", "#10B981"],
-            text_color="#FFFFFF"
+            self.action_frame, text="🚀 Elemzés Indítása", 
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"), height=44, width=190, corner_radius=10,
+            state="disabled", fg_color=["#10B981", "#059669"], hover_color=["#34D399", "#10B981"], text_color="#FFFFFF"
         )
         self.btn_start.configure(command=self.start_processing_thread)
         self.btn_start.pack(side="left", padx=(0, 12))
 
         self.btn_cancel = ctk.CTkButton(
-            self.action_frame, 
-            text="🛑 Mégsem", 
-            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
-            height=44,
-            width=120,
-            corner_radius=10,
-            state="disabled", 
-            fg_color=["#EF4444", "#DC2626"],
-            hover_color=["#F87171", "#EF4444"],
-            text_color="#FFFFFF"
+            self.action_frame, text="🛑 Mégsem", 
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"), height=44, width=120, corner_radius=10,
+            state="disabled", fg_color=["#EF4444", "#DC2626"], hover_color=["#F87171", "#EF4444"], text_color="#FFFFFF"
         )
         self.btn_cancel.configure(command=self.cancel_processing)
         self.btn_cancel.pack(side="left")
 
         self.progress_label = ctk.CTkLabel(
-            self.action_frame, 
-            text="● Rendszer készenlétben", 
-            font=ctk.CTkFont(family="Segoe UI", weight="bold", size=13),
-            text_color=["#4F46E5", "#818CF8"]
+            self.action_frame, text="● Rendszer készenlétben", 
+            font=ctk.CTkFont(family="Segoe UI", weight="bold", size=13), text_color=["#4F46E5", "#818CF8"]
         )
         self.progress_label.pack(side="right", padx=10)
 
-        # 4. KÖZÉPSŐ LOG / MONITOR PANEL
         self.log_frame = ctk.CTkFrame(
-            self.main_container, 
-            corner_radius=16,
-            border_width=1,
-            border_color=["#E2E8F0", "#1E293B"],
-            fg_color=["#FFFFFF", "#111827"]
+            self.main_container, corner_radius=16, border_width=1,
+            border_color=["#E2E8F0", "#1E293B"], fg_color=["#FFFFFF", "#111827"]
         )
         self.log_frame.pack(fill="both", expand=True, pady=(0, 15))
 
         self.log_title = ctk.CTkLabel(
-            self.log_frame, 
-            text="💻 Rendszernapló & Folyamatfigyelő", 
-            font=ctk.CTkFont(family="Segoe UI", weight="bold", size=12),
-            text_color=["#94A3B8", "#4B5563"]
+            self.log_frame, text="💻 Rendszernapló & Folyamatfigyelő", 
+            font=ctk.CTkFont(family="Segoe UI", weight="bold", size=12), text_color=["#94A3B8", "#4B5563"]
         )
         self.log_title.pack(anchor="w", padx=15, pady=(12, 6))
 
         self.log_textbox = ctk.CTkTextbox(
-            self.log_frame, 
-            font=ctk.CTkFont(family="Consolas", size=12),
-            border_width=0,
-            fg_color=["#F8FAFC", "#030712"],
-            text_color=["#0F172A", "#10B981"]
+            self.log_frame, font=ctk.CTkFont(family="Consolas", size=12), border_width=0,
+            fg_color=["#F8FAFC", "#030712"], text_color=["#0F172A", "#10B981"]
         )
         self.log_textbox.pack(fill="both", expand=True, padx=15, pady=(0, 15))
         self.log_textbox.configure(state="disabled")
 
-        # 5. ALSÓ FOOTER PANEL
         self.footer_frame = ctk.CTkFrame(self.main_container, fg_color="transparent")
         self.footer_frame.pack(fill="x")
 
         self.info_label = ctk.CTkLabel(
-            self.footer_frame, 
-            text=f"Támogatott modulok: {', '.join(self.registry.get_supported_extensions())}", 
-            font=ctk.CTkFont(family="Segoe UI", size=11),
-            text_color=["#64748B", "#4B5563"]
+            self.footer_frame, text=f"Támogatott modulok: {', '.join(self.registry.get_supported_extensions())}", 
+            font=ctk.CTkFont(family="Segoe UI", size=11), text_color=["#64748B", "#4B5563"]
         )
         self.info_label.pack(side="left")
 
         self.credits_label = ctk.CTkLabel(
-            self.footer_frame, 
-            text="© 2026 | Dombovári Olivér | Minden jog fenntartva | Verzió 2.6.1", 
-            font=ctk.CTkFont(family="Segoe UI", size=11, slant="italic"), 
-            text_color=["#64748B", "#4B5563"]
+            self.footer_frame, text="© 2026 | Dombovári Olivér | Minden jog fenntartva | Verzió 2.6.2", 
+            font=ctk.CTkFont(family="Segoe UI", size=11, slant="italic"), text_color=["#64748B", "#4B5563"]
         )
         self.credits_label.pack(side="right")
 
@@ -220,7 +169,6 @@ class UltimateDocSummarizerApp(ctk.CTk):
             self.log_textbox.configure(state="disabled")
 
     def clear_log(self):
-        """Teljesen kiüríti a rendszernaplót és visszaállítja a kezdeti üzenetet."""
         if hasattr(self, 'log_textbox') and self.log_textbox.winfo_exists():
             self.log_textbox.configure(state="normal")
             self.log_textbox.delete("1.0", "end")
@@ -228,53 +176,29 @@ class UltimateDocSummarizerApp(ctk.CTk):
             self.log("💡 Előző munkafolyamat sikeresen lezárva. Új elemzés indítható.")
 
     def show_modern_alert(self, title, message, color):
-        """Egyedi, modern, lekerekített sarkú felugró ablak a 2026-os dizájnhoz."""
-        # Létrehozunk egy al-ablakot (Toplevel)
         alert = ctk.CTkToplevel(self)
         alert.title(title)
         alert.geometry("420x220")
         alert.resizable(False, False)
-        
-        # Mindig a főablak felett jelenjen meg és blokkolja azt (Modal behavior)
         alert.transient(self)
         alert.grab_set()
         
-        # Középre igazítás a főablakhoz képest
         alert.update_idletasks()
         x = self.winfo_x() + (self.winfo_width() // 2) - (alert.winfo_width() // 2)
         y = self.winfo_y() + (self.winfo_height() // 2) - (alert.winfo_height() // 2)
         alert.geometry(f"+{x}+{y}")
 
-        # Belső konténer kártya
         card = ctk.CTkFrame(alert, corner_radius=16, fg_color=["#FFFFFF", "#111827"], border_width=1, border_color=["#E2E8F0", "#1E293B"])
         card.pack(fill="both", expand=True, padx=15, pady=15)
 
-        # Cím (A megadott témájú színnel)
-        lbl_title = ctk.CTkLabel(
-            card, text=title, 
-            font=ctk.CTkFont(family="Segoe UI", size=18, weight="bold"),
-            text_color=color
-        )
+        lbl_title = ctk.CTkLabel(card, text=title, font=ctk.CTkFont(family="Segoe UI", size=18, weight="bold"), text_color=color)
         lbl_title.pack(pady=(15, 5))
 
-        # Üzenet szövege
-        lbl_msg = ctk.CTkLabel(
-            card, text=message, 
-            font=ctk.CTkFont(family="Segoe UI", size=13),
-            text_color=["#1E293B", "#E2E8F0"]
-        )
+        lbl_msg = ctk.CTkLabel(card, text=message, font=ctk.CTkFont(family="Segoe UI", size=13), text_color=["#1E293B", "#E2E8F0"])
         lbl_msg.pack(pady=10, padx=20)
 
-        btn_ok = ctk.CTkButton(
-            card, text="Értem", 
-            font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
-            fg_color=color,
-            hover_color=color, 
-            height=35, width=100, corner_radius=8,
-            command=alert.destroy
-        )
+        btn_ok = ctk.CTkButton(card, text="Értem", font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"), fg_color=color, hover_color=color, height=35, width=100, corner_radius=8, command=alert.destroy)
         btn_ok.pack(pady=(10, 15))
-
         self.wait_window(alert)
 
     def start_processing_thread(self):
@@ -312,73 +236,14 @@ class UltimateDocSummarizerApp(ctk.CTk):
         parent_dir = os.path.dirname(self.selected_folder)
         relative_path = os.path.relpath(file_path, parent_dir)
 
-        if byte_data and ext in ['.jpg', '.jpeg', '.png', '.gif']:
-            prompt = (
-                "Te egy Software Architect és Business Analyst vagy. Elemezd a képet üzleti és technikai szempontból.\n\n"
-                "KÖTELEZŐ KIMENETI FORMÁTUM (Minden mező új sorba kerüljön, dupla sorközzel elválasztva!):\n"
-                f"### {file_name}\n\n"
-                f"**Mappa útvonal:** `{relative_path}`\n\n"
-                "**Kontextus:** [Írd le ide a kép típusát, pl. UI képernyőkép, architektúra diagram, folyamatábra]\n\n"
-                "**Fő gondolat:** [Írd le ide a lényeget 1-2 mondatban]\n\n"
-                "**Kulcspontok:**\n"
-                "- [Első vizuális/üzleti elem vagy azonosított modul]\n"
-                "- [Második technikai összefüggés, logikai folyamat vagy rendszerhiba]\n"
-            )
-        elif ext in ['.xls', '.xlsx']:
-            prompt = (
-                "Te egy Business Analyst és Adatmodellező vagy. Elemezd a nyers Excel táblázatot.\n\n"
-                "KÖTELEZŐ KIMENETI FORMÁTUM (Minden mező új sorba kerüljön, dupla sorközzel elválasztva!):\n"
-                f"### {file_name}\n\n"
-                f"**Mappa útvonal:** `{relative_path}`\n\n"
-                "**Kontextus:** [Írd le ide az adatstruktúra típusát, pl. riport, DTO mapping, adatbázis terv]\n\n"
-                "**Fő gondolat:** [Írd le ide az adathalmaz üzleti és funkcionális célját]\n\n"
-                "**Kulcspontok:**\n"
-                "- [Fő oszlopok, entitások vagy adatcsoportok listája]\n"
-                "- [Kulcsfontosságú üzleti adatok vagy technikai rekordok összefüggése]\n\n"
-                f"<source_text>\n{extracted_text}\n</source_text>"
-            )
-        elif ext == '.mp3':
-            prompt = (
-                "Te egy Business Analyst vagy. Készíts strukturált üzleti összefoglalót a megadott hanganyag-leiratból.\n\n"
-                "KÖTELEZŐ KIMENETI FORMÁTUM (Minden mező új sorba kerüljön, dupla sorközzel elválasztva!):\n"
-                f"### {file_name}\n\n"
-                f"**Mappa útvonal:** `{relative_path}`\n\n"
-                "**Kontextus:** [Írd le ide a hanganyag típusát, pl. ügyfél interjú, stand-up, fejlesztői egyeztetés]\n\n"
-                "**Fő gondolat:** [Írd le ide a beszélgetés fókuszát és eredményét]\n\n"
-                "**Kulcspontok és Akciópontok:**\n"
-                "- [Elhangzott üzleti vagy technikai követelmények]\n"
-                "- [Megszületett döntések és a következő lépések/felelősök]\n\n"
-                f"<source_text>\n{extracted_text}\n</source_text>"
-            )
-        else:
-            prompt = (
-                "Te egy Software Architect és Rendszerelemző vagy. Elemezd a dokumentum szövegét.\n\n"
-                "KÖTELEZŐ KIMENETI FORMÁTUM (Minden mező új sorba kerüljön, dupla sorközzel elválasztva!):\n"
-                f"### {file_name}\n\n"
-                f"**Mappa útvonal:** `{relative_path}`\n\n"
-                "**Kontextus:** [Írd le ide a dokumentum típusát, pl. funkcionális specifikáció, önéletrajz, üzleti ajánlat]\n\n"
-                "**Fő gondolat:** [Írd le ide a tartalom lényegét 1-2 mondatban]\n\n"
-                "**Kulcspontok:**\n"
-                "- [Kiemelt üzleti követelmény vagy mérföldkő]\n"
-                "- [Kritikus technikai architektúra elem vagy szabály]\n\n"
-                f"<source_text>\n{extracted_text}\n</source_text>"
-            )
-        
-        prompt += (
-            "\nSZIGORÚ UTASÍTÁSOK A FORMÁZÁSHOZ ÉS TARTALOMHOZ:\n"
-            "- A dokumentumot a legelső karakterétől a legutolsóig, TELJES EGÉSZÉBEN elemezd! SOHA ne hagyd el vagy vágd le a forrásanyag végét!\n"
-            "- Különösen ügyelj a dokumentumok utolsó szekcióira (pl. záradékok, összefoglalók, akciópontok vagy utolsó Excel sorok), a kimenet ezeket is hiánytalanul tükrözze!\n"
-            "- SOHA ne folyasd össze a sorokat! Minden egyes pont (Mappa útvonal, Kontextus, Fő gondolat) után tegyél dupla sorközt (üres sort)!\n"
-            "- Ne írj bevezető szöveget, a választ azonnal a '###' jellel kezdd.\n"
-            "- Ne használj extra magyarázatokat, kizárólag a sablon szerkezetét töltsd fel adatokkal.\n"
+        # Itt szándékosan nem kapjuk el a hibát! Hagyjuk, hogy a szál visszaadja a kivételt a fő szálnak.
+        return self.ai_manager.analyze_file(
+            file_name=file_name,
+            relative_path=relative_path,
+            ext=ext,
+            extracted_text=extracted_text,
+            byte_data=byte_data
         )
-
-        summary = self.ai_manager.query_model(prompt, mime_type, byte_data)
-        if self.is_cancelled: return None
-
-        part_content = f"{summary}\n\n*(vissza a jegyzékhez)*\n\n"
-        self.progress_label.configure(text=f"✅ Kész: {file_name}", text_color="#2EA44F")
-        return part_content
 
     def main_process(self):
         supported_exts = self.registry.get_supported_extensions()
@@ -392,7 +257,7 @@ class UltimateDocSummarizerApp(ctk.CTk):
 
         if self.is_cancelled: return
         if not files_to_process:
-            messagebox.showinfo("Információ", "Nem találtam támogatott fájlt.")
+            messagebox.showinfo("Információ", "Nem találtam támogatott fáljt.")
             self.reset_gui_after_cancel()
             return
 
@@ -407,16 +272,38 @@ class UltimateDocSummarizerApp(ctk.CTk):
         self.log(f"🤖 Párhuzamos feldolgozás indítása (max 3 szál)...")
 
         results = []
+        critical_error = None
+
         with ThreadPoolExecutor(max_workers=3) as executor:
             self.executor = executor
-            futures = [
-                executor.submit(self.process_single_file, file_path, i, total_files)
+            # Elindítjuk a szálakat
+            future_to_file = {
+                executor.submit(self.process_single_file, file_path, i, total_files): file_path 
                 for i, file_path in enumerate(files_to_process, 1)
-            ]
-            for future in futures:
-                if self.is_cancelled: break
-                res = future.result()
-                if res: results.append(res)
+            }
+            
+            # Az as_completed()-nek köszönhetően azonnal reagálunk, amint egy szál végez (vagy hibára fut)
+            for future in as_completed(future_to_file):
+                file_path = future_to_file[future]
+                file_name = os.path.basename(file_path)
+                
+                try:
+                    res = future.result()
+                    if res: 
+                        results.append(res)
+                except Exception as e:
+                    # Itt kapjuk el a szálból visszadobott API hibát, immár biztonságosan a főszál kontextusában!
+                    critical_error = f"❌ KRITIKUS API HIBA a(z) '{file_name}' feldolgozásakor: {str(e)}"
+                    self.log(critical_error)
+                    self.log("🛑 Elemzés megszakítva.")
+                    self.cancel_processing()
+                    break
+
+        # Ha hiba történt, feldobjuk az ablakot, leállunk és NEM mentünk üres riportot
+        if critical_error:
+            self.show_modern_alert("Kritikus API Hiba", f"A Gemini leállt.\n\nA feldolgozás megszakadt.", "#EF4444")
+            self.reset_gui_after_cancel()
+            return
 
         if self.is_cancelled: return
 
@@ -425,36 +312,17 @@ class UltimateDocSummarizerApp(ctk.CTk):
         try:
             ReportWriter.save_to_file(output_file_path, md_content)
             self.progress_label.configure(text="✨ Kész!", text_color="#2EA44F")
-            
-            self.show_modern_alert(
-                title="Siker!", 
-                message="Az elemzés sikeresen elkészült!\nA jelentés elmentve a kiválasztott helyre.", 
-                color="#10B981"
-            )
-            
+            self.show_modern_alert(title="Siker!", message="Az elemzés sikeresen elkészült!\nA jelentés elmentve a kiválasztott helyre.", color="#10B981")
             self.clear_log()
-            
         except Exception as e:
-            self.show_modern_alert(
-                title="Hiba történt", 
-                message=f"Nem sikerült a mentés:\n{str(e)}", 
-                color="#EF4444"
-            )
+            self.show_modern_alert(title="Hiba történt", message=f"Nem sikerült a mentés:\n{str(e)}", color="#EF4444")
 
         self.btn_start.configure(state="disabled")
         self.btn_select_folder.configure(state="normal")
         self.btn_cancel.configure(state="disabled")
         self.progress_label.configure(text="● Rendszer készenlétben", text_color=["#4F46E5", "#818CF8"])
-
-        self.lbl_folder_path.configure(
-            text="Válassz ki egy forrásmappát az elemzés indításához...", 
-            text_color=["#64748B", "#6B7280"]
-        )
-        
+        self.lbl_folder_path.configure(text="Válassz ki egy forrásmappát az elemzés indításához...", text_color=["#64748B", "#6B7280"])
         self.folder_card.configure(fg_color=["#FFFFFF", "#111827"])
-        self.btn_select_folder.focus_set()
-        self.focus_set()
-        
         self.update()
 
     def reset_gui_after_cancel(self):
