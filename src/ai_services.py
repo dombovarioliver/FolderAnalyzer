@@ -19,7 +19,6 @@ class GeminiAIManager:
             return
         
         try:
-            # Inicializáljuk a Google GenAI klienst
             self.client = genai.Client(api_key=api_key)
             log_callback("✅ Gemini API kliens sikeresen inicializálva.")
         except Exception as e:
@@ -39,7 +38,6 @@ class GeminiAIManager:
             try:
                 contents = []
                 
-                # Ha kaptunk extra bináris adatot (pl. képet), csatoljuk a kéréshez
                 if byte_data and mime_type:
                     part = types.Part.from_bytes(
                         data=byte_data,
@@ -47,7 +45,6 @@ class GeminiAIManager:
                     )
                     contents.append(part)
                 
-                # Hozzáadjuk a szöveges utasítást (prompt)
                 contents.append(prompt)
 
                 response = self.client.models.generate_content(

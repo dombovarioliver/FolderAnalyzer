@@ -1,7 +1,6 @@
 import os
 import sys
 
-# --- PYINSTALLER ÉS UNICODE JAVÍTÁS ---
 if sys.stdout is None:
     sys.stdout = open(os.devnull, 'w', encoding='utf-8')
 if sys.stderr is None:
@@ -12,7 +11,7 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from concurrent.futures import ThreadPoolExecutor
 
-# SOLID modulok importálása
+
 from ai_services import GeminiAIManager
 from report_writer import ReportWriter
 from extractors import (
@@ -21,7 +20,7 @@ from extractors import (
 )
 
 # Globális téma beállítások
-ctk.set_appearance_mode("System")  # Követi a Windows sötét/világos módját
+ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
 class UltimateDocSummarizerApp(ctk.CTk):
@@ -38,15 +37,12 @@ class UltimateDocSummarizerApp(ctk.CTk):
         self.is_cancelled = False
         self.executor = None
         
-        # Függőségek példányosítása és befecskendezése (DIP)
         self.ai_manager = GeminiAIManager(model_name="gemini-2.5-flash")
         self.registry = ExtractorRegistry()
         self.setup_extractors()
-        
-        # Felület felépítése
+
         self.create_widgets()
         
-        # Rendszerindítás háttérszálon
         threading.Thread(target=self.initialize_system, daemon=True).start()
 
     def setup_extractors(self):
@@ -62,11 +58,8 @@ class UltimateDocSummarizerApp(ctk.CTk):
         self.ai_manager.ensure_model_is_ready(self.log)
 
     def create_widgets(self):
-        # 2026-os Prémium Paletta Beállításai
-        # Háttér: Mély kiber-antracit. Kártyák: Sötét grafit, finom élénk kék/zöld gombokkal.
-        self.configure(fg_color=["#F4F6F9", "#0B0F19"]) # Világos / Sötét alap
+        self.configure(fg_color=["#F4F6F9", "#0B0F19"])
 
-        # Fő konténer paddinggel
         self.main_container = ctk.CTkFrame(self, fg_color="transparent")
         self.main_container.pack(fill="both", expand=True, padx=30, pady=25)
 
@@ -78,7 +71,7 @@ class UltimateDocSummarizerApp(ctk.CTk):
             self.header_frame, 
             text="📁 FolderAnalyzer Pro", 
             font=ctk.CTkFont(family="Segoe UI", size=26, weight="bold"),
-            text_color=["#1E293B", "#6366F1"] # Világos: Sötétkék | Sötét: Élénk Kiber-Ibolya/Kék
+            text_color=["#1E293B", "#6366F1"]
         )
         self.title_label.pack(side="left")
         
@@ -96,7 +89,7 @@ class UltimateDocSummarizerApp(ctk.CTk):
             corner_radius=16, 
             border_width=1, 
             border_color=["#E2E8F0", "#1E293B"],
-            fg_color=["#FFFFFF", "#111827"] # Hófehér / Mély Éjfekete kártya
+            fg_color=["#FFFFFF", "#111827"]
         )
         self.folder_card.pack(fill="x", pady=(0, 20))
         
@@ -106,7 +99,7 @@ class UltimateDocSummarizerApp(ctk.CTk):
             font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
             height=42,
             corner_radius=10,
-            fg_color=["#4F46E5", "#4338CA"], # Modern Indigo kék
+            fg_color=["#4F46E5", "#4338CA"],
             hover_color=["#6366F1", "#4F46E5"],
             command=self.select_folder
         )
@@ -133,7 +126,7 @@ class UltimateDocSummarizerApp(ctk.CTk):
             width=190,
             corner_radius=10,
             state="disabled", 
-            fg_color=["#10B981", "#059669"], # Neon-smaragd zöld
+            fg_color=["#10B981", "#059669"], 
             hover_color=["#34D399", "#10B981"],
             text_color="#FFFFFF"
         )
@@ -148,7 +141,7 @@ class UltimateDocSummarizerApp(ctk.CTk):
             width=120,
             corner_radius=10,
             state="disabled", 
-            fg_color=["#EF4444", "#DC2626"], # Kiber-vörös
+            fg_color=["#EF4444", "#DC2626"],
             hover_color=["#F87171", "#EF4444"],
             text_color="#FFFFFF"
         )
@@ -185,8 +178,8 @@ class UltimateDocSummarizerApp(ctk.CTk):
             self.log_frame, 
             font=ctk.CTkFont(family="Consolas", size=12),
             border_width=0,
-            fg_color=["#F8FAFC", "#030712"], # Sötét módban tiszta mélyfekete konzol háttér
-            text_color=["#0F172A", "#10B981"] # Világos: sötétkék betű | Sötét: mátrix-zöld konzol szöveg
+            fg_color=["#F8FAFC", "#030712"],
+            text_color=["#0F172A", "#10B981"]
         )
         self.log_textbox.pack(fill="both", expand=True, padx=15, pady=(0, 15))
         self.log_textbox.configure(state="disabled")
@@ -261,7 +254,6 @@ class UltimateDocSummarizerApp(ctk.CTk):
         parent_dir = os.path.dirname(self.selected_folder)
         relative_path = os.path.relpath(file_path, parent_dir)
 
-        # --- DINAMIKUS PROMPTOK PONTOS SORSZERKEZETTEL ---
         if byte_data and ext in ['.jpg', '.jpeg', '.png', '.gif']:
             prompt = (
                 "Te egy Software Architect és Business Analyst vagy. Elemezd a képet üzleti és technikai szempontból.\n\n"
