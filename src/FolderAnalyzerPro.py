@@ -148,7 +148,7 @@ class UltimateDocSummarizerApp(ctk.CTk):
         self.info_label.pack(side="left")
 
         self.credits_label = ctk.CTkLabel(
-            self.footer_frame, text="© 2026 | Dombovári Olivér | Minden jog fenntartva | Verzió 2.6.2", 
+            self.footer_frame, text="© 2026 | Dombovári Olivér | Minden jog fenntartva | Verzió 1.2.0", 
             font=ctk.CTkFont(family="Segoe UI", size=11, slant="italic"), text_color=["#64748B", "#4B5563"]
         )
         self.credits_label.pack(side="right")
