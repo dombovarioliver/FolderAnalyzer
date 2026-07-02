@@ -1,0 +1,19 @@
+# Python gyorsítótárak
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# PyInstaller és Build mappák (Ezeket tilos feltölteni!)
+build/
+dist/
+*.spec
+
+# Virtuális környezet (ha használsz)
+venv/
+.venv/
+.env
+
+# Felhasználói beállítások
+.vscode/
+.idea/
