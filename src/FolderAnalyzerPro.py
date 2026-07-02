@@ -219,6 +219,66 @@ class UltimateDocSummarizerApp(ctk.CTk):
             self.log_textbox.see("end")
             self.log_textbox.configure(state="disabled")
 
+    def clear_log(self):
+        """Teljesen kiüríti a rendszernaplót és visszaállítja a kezdeti üzenetet."""
+        if hasattr(self, 'log_textbox') and self.log_textbox.winfo_exists():
+            self.log_textbox.configure(state="normal")
+            self.log_textbox.delete("1.0", "end")
+            self.log_textbox.configure(state="disabled")
+            self.log("💡 Előző munkafolyamat sikeresen lezárva. Új elemzés indítható.")
+
+    def show_modern_alert(self, title, message, color):
+        """Egyedi, modern, lekerekített sarkú felugró ablak a 2026-os dizájnhoz."""
+        # Létrehozunk egy al-ablakot (Toplevel)
+        alert = ctk.CTkToplevel(self)
+        alert.title(title)
+        alert.geometry("420x220")
+        alert.resizable(False, False)
+        
+        # Mindig a főablak felett jelenjen meg és blokkolja azt (Modal behavior)
+        alert.transient(self)
+        alert.grab_set()
+        
+        # Középre igazítás a főablakhoz képest
+        alert.update_idletasks()
+        x = self.winfo_x() + (self.winfo_width() // 2) - (alert.winfo_width() // 2)
+        y = self.winfo_y() + (self.winfo_height() // 2) - (alert.winfo_height() // 2)
+        alert.geometry(f"+{x}+{y}")
+
+        # Belső konténer kártya
+        card = ctk.CTkFrame(alert, corner_radius=16, fg_color=["#FFFFFF", "#111827"], border_width=1, border_color=["#E2E8F0", "#1E293B"])
+        card.pack(fill="both", expand=True, padx=15, pady=15)
+
+        # Cím (A megadott témájú színnel)
+        lbl_title = ctk.CTkLabel(
+            card, text=title, 
+            font=ctk.CTkFont(family="Segoe UI", size=18, weight="bold"),
+            text_color=color
+        )
+        lbl_title.pack(pady=(15, 5))
+
+        # Üzenet szövege
+        lbl_msg = ctk.CTkLabel(
+            card, text=message, 
+            font=ctk.CTkFont(family="Segoe UI", size=13),
+            text_color=["#1E293B", "#E2E8F0"]
+        )
+        lbl_msg.pack(pady=10, padx=20)
+
+        # Modern OK gomb, ami bezárja az ablakot
+        btn_ok = ctk.CTkButton(
+            card, text="Értem", 
+            font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
+            fg_color=color,
+            hover_color=color, # Egyező szín a letisztultságért
+            height=35, width=100, corner_radius=8,
+            command=alert.destroy
+        )
+        btn_ok.pack(pady=(10, 15))
+
+        # Megvárjuk, amíg a felhasználó bezárja a felugrót, mielőtt a kód továbblépne
+        self.wait_window(alert)
+
     def start_processing_thread(self):
         self.is_cancelled = False
         self.btn_start.configure(state="disabled")
@@ -277,7 +337,7 @@ class UltimateDocSummarizerApp(ctk.CTk):
                 "**Kulcspontok:**\n"
                 "- [Fő oszlopok, entitások vagy adatcsoportok listája]\n"
                 "- [Kulcsfontosságú üzleti adatok vagy technikai rekordok összefüggése]\n\n"
-                f"<source_text>\n{extracted_text[:16000]}\n</source_text>"
+                f"<source_text>\n{extracted_text}\n</source_text>"
             )
         elif ext == '.mp3':
             prompt = (
@@ -290,7 +350,7 @@ class UltimateDocSummarizerApp(ctk.CTk):
                 "**Kulcspontok és Akciópontok:**\n"
                 "- [Elhangzott üzleti vagy technikai követelmények]\n"
                 "- [Megszületett döntések és a következő lépések/felelősök]\n\n"
-                f"<source_text>\n{extracted_text[:16000]}\n</source_text>"
+                f"<source_text>\n{extracted_text}\n</source_text>"
             )
         else:
             prompt = (
@@ -303,11 +363,13 @@ class UltimateDocSummarizerApp(ctk.CTk):
                 "**Kulcspontok:**\n"
                 "- [Kiemelt üzleti követelmény vagy mérföldkő]\n"
                 "- [Kritikus technikai architektúra elem vagy szabály]\n\n"
-                f"<source_text>\n{extracted_text[:16000]}\n</source_text>"
+                f"<source_text>\n{extracted_text}\n</source_text>"
             )
         
         prompt += (
-            "\nSZIGORÚ UTASÍTÁSOK A FORMÁZÁSHOZ:\n"
+            "\nSZIGORÚ UTASÍTÁSOK A FORMÁZÁSHOZ ÉS TARTALOMHOZ:\n"
+            "- A dokumentumot a legelső karakterétől a legutolsóig, TELJES EGÉSZÉBEN elemezd! SOHA ne hagyd el vagy vágd le a forrásanyag végét!\n"
+            "- Különösen ügyelj a dokumentumok utolsó szekcióira (pl. záradékok, összefoglalók, akciópontok vagy utolsó Excel sorok), a kimenet ezeket is hiánytalanul tükrözze!\n"
             "- SOHA ne folyasd össze a sorokat! Minden egyes pont (Mappa útvonal, Kontextus, Fő gondolat) után tegyél dupla sorközt (üres sort)!\n"
             "- Ne írj bevezető szöveget, a választ azonnal a '###' jellel kezdd.\n"
             "- Ne használj extra magyarázatokat, kizárólag a sablon szerkezetét töltsd fel adatokkal.\n"
@@ -364,17 +426,47 @@ class UltimateDocSummarizerApp(ctk.CTk):
         
         try:
             ReportWriter.save_to_file(output_file_path, md_content)
-            self.log(f"✨ SIKER! Jelentés elmentve ide: {output_file_path}")
-            messagebox.showinfo("Siker!", "A modernizált, tiszta architektúrájú elemzés elkészült!")
+            self.progress_label.configure(text="✨ Kész!", text_color="#2EA44F")
+            
+            # --- MODERN SIKER ABLAK MEGHÍVÁSA ---
+            self.show_modern_alert(
+                title="Siker!", 
+                message="Az elemzés sikeresen elkészült!\nA jelentés elmentve a kiválasztott helyre.", 
+                color="#10B981" # Modern smaragd zöld
+            )
+            
+            self.clear_log()
+            
         except Exception as e:
-            messagebox.showerror("Hiba", f"Nem sikerült a mentés: {str(e)}")
+            # --- MODERN HIBA ABLAK MEGHÍVÁSA ---
+            self.show_modern_alert(
+                title="Hiba történt", 
+                message=f"Nem sikerült a mentés:\n{str(e)}", 
+                color="#EF4444" # Kiber-vörös
+            )
 
-        self.progress_label.configure(text="✨ Kész!", text_color="#2EA44F")
-        self.btn_start.configure(state="normal")
+        self.btn_start.configure(state="disabled")
         self.btn_select_folder.configure(state="normal")
         self.btn_cancel.configure(state="disabled")
+        self.progress_label.configure(text="● Rendszer készenlétben", text_color=["#4F46E5", "#818CF8"])
+
+        # 2. A szöveg visszaállítása úgy, hogy FIXEN üresen hagyjuk a gomb jobb oldalát egy pillanatra,
+        # majd kényszerítjük a teljes szülő kártyát (folder_card) a grafikai puffer ürítésére.
+        self.lbl_folder_path.configure(
+            text="Válassz ki egy forrásmappát az elemzés indításához...", 
+            text_color=["#64748B", "#6B7280"]
+        )
+        
+        # Ez a 3 soros mikromenedzsment teljesen letörli a hibásan renderelt Windows pixeleket:
+        self.folder_card.configure(fg_color=["#FFFFFF", "#111827"])
+        self.btn_select_folder.focus_set()
+        self.focus_set()
+        
+        # 3. Teljes ablak elrendezés frissítése
+        self.update()
 
     def reset_gui_after_cancel(self):
+        self.clear_log()
         self.progress_label.configure(text="❌ Megszakítva.", text_color="#D73A49")
         self.btn_start.configure(state="normal")
         self.btn_select_folder.configure(state="normal")
