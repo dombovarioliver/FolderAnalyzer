@@ -265,18 +265,16 @@ class UltimateDocSummarizerApp(ctk.CTk):
         )
         lbl_msg.pack(pady=10, padx=20)
 
-        # Modern OK gomb, ami bezárja az ablakot
         btn_ok = ctk.CTkButton(
             card, text="Értem", 
             font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
             fg_color=color,
-            hover_color=color, # Egyező szín a letisztultságért
+            hover_color=color, 
             height=35, width=100, corner_radius=8,
             command=alert.destroy
         )
         btn_ok.pack(pady=(10, 15))
 
-        # Megvárjuk, amíg a felhasználó bezárja a felugrót, mielőtt a kód továbblépne
         self.wait_window(alert)
 
     def start_processing_thread(self):
@@ -428,21 +426,19 @@ class UltimateDocSummarizerApp(ctk.CTk):
             ReportWriter.save_to_file(output_file_path, md_content)
             self.progress_label.configure(text="✨ Kész!", text_color="#2EA44F")
             
-            # --- MODERN SIKER ABLAK MEGHÍVÁSA ---
             self.show_modern_alert(
                 title="Siker!", 
                 message="Az elemzés sikeresen elkészült!\nA jelentés elmentve a kiválasztott helyre.", 
-                color="#10B981" # Modern smaragd zöld
+                color="#10B981"
             )
             
             self.clear_log()
             
         except Exception as e:
-            # --- MODERN HIBA ABLAK MEGHÍVÁSA ---
             self.show_modern_alert(
                 title="Hiba történt", 
                 message=f"Nem sikerült a mentés:\n{str(e)}", 
-                color="#EF4444" # Kiber-vörös
+                color="#EF4444"
             )
 
         self.btn_start.configure(state="disabled")
@@ -450,19 +446,15 @@ class UltimateDocSummarizerApp(ctk.CTk):
         self.btn_cancel.configure(state="disabled")
         self.progress_label.configure(text="● Rendszer készenlétben", text_color=["#4F46E5", "#818CF8"])
 
-        # 2. A szöveg visszaállítása úgy, hogy FIXEN üresen hagyjuk a gomb jobb oldalát egy pillanatra,
-        # majd kényszerítjük a teljes szülő kártyát (folder_card) a grafikai puffer ürítésére.
         self.lbl_folder_path.configure(
             text="Válassz ki egy forrásmappát az elemzés indításához...", 
             text_color=["#64748B", "#6B7280"]
         )
         
-        # Ez a 3 soros mikromenedzsment teljesen letörli a hibásan renderelt Windows pixeleket:
         self.folder_card.configure(fg_color=["#FFFFFF", "#111827"])
         self.btn_select_folder.focus_set()
         self.focus_set()
         
-        # 3. Teljes ablak elrendezés frissítése
         self.update()
 
     def reset_gui_after_cancel(self):
