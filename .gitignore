@@ -1,19 +1,75 @@
-# Python gyorsítótárak
+# ==========================================
+# 📁 Python Gyorsítótárak és Binárisok
+# ==========================================
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# PyInstaller és Build mappák (Ezeket tilos feltölteni!)
+.Python
+env/
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ==========================================
+# 📦 PyInstaller és Exe Fordítási Mappák
+# (Bárhol jönnek létre az src-n belül is)
+# ==========================================
+**/build/
+**/dist/
+*.manifest
 *.spec
 
-# Virtuális környezet (ha használsz)
-venv/
-.venv/
+# ==========================================
+# 🤫 Környezeti változók és Titkok
+# ==========================================
 .env
+.venv
+venv/
+ENV/
+env.bak
+venv.bak
 
-# Felhasználói beállítások
-.vscode/
+# ==========================================
+# 💻 Fejlesztőkörnyezetek (IDE) konfigurációi
+# ==========================================
+# JetBrains (PyCharm, CLion, DataGrip)
 .idea/
+*.iws
+
+# Visual Studio Code
+.vscode/
+.history/
+*.code-workspace
+
+# ==========================================
+# 🛠️ Rendszerszemét (Windows / macOS)
+# ==========================================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ==========================================
+# 📊 Lokális Tesztadatok és Jelentések
+# (Ha a teszt .md fájlokat nem akarod feltölteni)
+# ==========================================
+*.log
+**/local_test/
